@@ -1,0 +1,57 @@
+body{
+	background: url(../images/restaurant_icons.png);
+	font-family: 'Helvetica';
+	color: #444;
+	margin:0;
+}
+
+.grid {
+    padding: 60px;
+    overflow: auto;
+}
+
+.card {
+    width: 100px;
+    background: #fff;
+    border-radius: 50%;
+    min-height: 100px;
+    float: left;
+    margin: 0 0 20px 20px;
+    padding: 15px;
+    text-align: center;
+    font-size: 2em;
+    border-color: #ddd;
+    border-style: solid;
+    line-height: 100px;
+    position: relative;
+    transition: background-color 0.5s ease;
+}
+
+.hint {
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    top: -10px;
+}
+
+.card:hover {
+	background:rgba(255,221,51, 0.25);
+}
+
+.cardFace.flipped {
+    border-radius: 50%;
+    color: #fff;
+    height:100px;
+}
+
+.clear {
+    background: rgba(255,255,255, 0.8);
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 3em;
+    position: absolute;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+}

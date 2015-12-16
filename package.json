@@ -1,0 +1,29 @@
+{
+  "name": "sandBox",
+  "version": "0.2.7",
+  "description": "JavaScript Sandbox project",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "browserify src/index.js -o build/sandbox.js",
+    "test": "jshint src"
+  },
+  "devDependencies": {
+    "jshint": "~2.8.0",
+    "browserify": "~11.0.0"
+  },
+  "dependencies": {
+    "wuidom": "~0.7.1",
+    "util": "0.10.3",
+    "wuibuttonbehavior": "~0.2.0"
+  },
+  "author": "sarah",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wizcorp/constrained.git"
+  },
+  "keywords": [
+  ],
+  "bugs": {
+  }
+}
