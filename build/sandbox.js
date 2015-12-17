@@ -2835,26 +2835,175 @@ WuiDom.prototype.allowDomEvents = function () {
 var WuiDom = require('wuidom');
 var inherits = require('util').inherits;
 var wuibuttonbehavior = require('wuibuttonbehavior');
+var constants = require('./constants');
 
-var DEVELOPMENT_MODE = false;
+function Card(symbol, game) {
+    WuiDom.call(this, 'div', { className: 'card' });
+    wuibuttonbehavior(this);
 
-var htmlElement = document.querySelector('#main');
-var main = new WuiDom(htmlElement);
+	this.isFlipped = true;
+	this.symbol = null;
 
-var clear = main.createChild('div', { className: 'clear' });
-clear.createChild('h2', { className: 'clearHeader', text: 'All Clear' });
-var reset = clear.createChild('div', { className: 'reset', text: "Play Again"});
-wuibuttonbehavior(reset);
+	var options = { className: 'image', attr: { src: ''}}
+
+    if (constants.DEVELOPMENT_MODE) {
+    	this.hint = this.createChild('img', { className: 'hint'});
+    }
+
+	this.cardFace = this.createChild('img', { className: 'cardFace'});
+
+    this.on('tap', function () {
+    	game.flipCard(this);
+	});
+
+	this.reset(symbol);
+}
+
+inherits(Card, WuiDom);
+module.exports = Card;
+
+Card.prototype.flip = function () {
+	this.isFlipped = !this.isFlipped;
+	this.cardFace.toggleDisplay(this.isFlipped);
+	this.cardFace.toggleClassName('flipped', this.isFlipped);
+};
+
+Card.prototype.reset = function(symbol){
+
+	if (constants.DEVELOPMENT_MODE) {
+		this.hint.addClassNames(symbol);
+		this.hint.rootElement.src = symbol;
+    }
+
+	this.cardFace.rootElement.src = symbol;
+	this.symbol = symbol;
+
+	this.isFlipped = true;
+	this.flip();
+
+	this.enable();
+};
 
 
-var grid = main.createChild('div', { className: 'grid' });
+},{"./constants":19,"util":13,"wuibuttonbehavior":14,"wuidom":16}],18:[function(require,module,exports){
+var constants = require('./constants');
+var shuffle = require('./shuffle');
+var Card = require('./Card');
 
-clear.hide();
+var arr = [];
 
-var col = 6;
-var row = 4;
+for (var i = 0; i < constants.col * constants.row; i ++) {
+	var num = Math.floor(i / 2);
+	arr.push(constants.symbolList[num]);
+}
 
-var symbolList = [
+arr = shuffle(arr);
+
+
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+/** Manage cards and user interactions
+ *
+ */
+function GameManager() {
+	this.firstFlippedCard = null;
+	this.winCount = 0;
+	this.isLocked = false;
+	this.cards = [];
+}
+
+module.exports = GameManager;
+
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+/** Reset the game: flip face down alls cards, and reset all variables */
+GameManager.prototype.reset = function(){
+	this.firstFlippedCard = null;
+	this.winCount = 0;
+	this.isLocked = false;
+
+	this.resetCards();
+}
+
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+/** creating all cards in the game. This function is called only once at startup.
+ *
+ * @param {WuiDom} grid - WuiDom object that will contains the cards
+ */
+GameManager.prototype.createCards = function (grid) {
+	for (var i = 0; i < constants.col * constants.row; i ++) {
+		var card = new Card(arr[i], this);
+		this.cards.push(card);
+	
+		grid.appendChild(card);
+	}
+}
+
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+/** shuffle cards */
+GameManager.prototype.resetCards = function(){
+
+	arr = shuffle(arr);
+
+	for (var i = 0; i < constants.col * constants.row; i ++) {
+		var card = this.cards[i];
+		card.reset(arr[i]);
+	}
+}
+
+//▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+/** Flip a card face up
+ *
+ * @param {WuiDom} card - the card that user want to flip
+ */
+GameManager.prototype.flipCard = function (card) {
+
+	if (this.isLocked){
+		return;
+	}
+
+	var self = this;
+
+	card.disable();
+
+	if (this.firstFlippedCard === null) {
+		// this is the first card we flip
+		card.flip();
+	    this.firstFlippedCard = card;
+	} else {
+		// this is the second card we flip
+		var isSameSymbol = this.firstFlippedCard.symbol === card.symbol;
+		card.flip();
+
+		var firstCard = this.firstFlippedCard;
+		this.firstFlippedCard = null;
+
+		if (isSameSymbol) {
+			this.winCount++;
+			console.log("Win", this.winCount);
+
+			if (this.winCount === constants.col * constants.row / 2) {
+				clear.show();
+			}
+		} else {
+
+			this.isLocked = true;
+
+			window.setTimeout(function () {
+				card.flip();
+				firstCard.flip();
+				card.enable();
+				firstCard.enable();
+				self.isLocked = false;
+			}, 1000);
+		}
+	}
+};
+
+
+},{"./Card":17,"./constants":19,"./shuffle":21}],19:[function(require,module,exports){
+exports.col = 6;
+exports.row = 4;
+
+exports.symbolList = [
 	'http://placehold.it/100/A10559/ffffff?text=CARD',
 	'http://placehold.it/100/632065/ffffff?text=CARD',
 	'http://placehold.it/100/F9A487/ffffff?text=CARD',
@@ -2869,169 +3018,54 @@ var symbolList = [
 	'http://placehold.it/100/FAF9E5/ffffff?text=CARD'
 ];
 
-var isLocked = false;
-
-function GameManager() {
-	this.reset();
-}
-
-GameManager.prototype.reset = function(){
-	this.firstFlippedCard = null;
-	this.winCount = 0;
-	isLocked = false;
-}
-
-GameManager.prototype.flipCard = function (card) {
-
-	if (isLocked){
-		return;
-	}
-
-	var self = this;
-
-	card.disable();
-
-	if (this.firstFlippedCard === null) {
-		card.flip();
-	    this.firstFlippedCard = card;
-	} else {
-		var isSameSymbol = this.firstFlippedCard.symbol === card.symbol;
-		card.flip();
-
-		var firstCard = this.firstFlippedCard;
-		this.firstFlippedCard = null;
-
-		if (isSameSymbol) {
-			this.winCount++;
-			console.log("Win", this.winCount);
-
-			if (this.winCount === col * row / 2) {
-				clear.show();
-			}
-		} else {
-
-			isLocked = true;
-
-			window.setTimeout(function () {
-				card.flip();
-				firstCard.flip();
-				card.enable();
-				firstCard.enable();
-				isLocked = false;
-			}, 1000);
-		}
-	}
-};
+exports.DEVELOPMENT_MODE = false;
+},{}],20:[function(require,module,exports){
+var WuiDom = require('wuidom');
+var wuibuttonbehavior = require('wuibuttonbehavior');
+var GameManager = require('./GameManager');
+var constants = require('./constants');
 
 var game = new GameManager();
 
-function Card(symbol) {
-    WuiDom.call(this, 'div', { className: 'card' });
-    wuibuttonbehavior(this);
+var htmlElement = document.querySelector('#main');
+var main = new WuiDom(htmlElement);
 
-	this.isFlipped = true;
-	this.symbol = null;
+var clear = main.createChild('div', { className: 'clear' });
+clear.createChild('h2', { className: 'clearHeader', text: 'All Clear' });
+var reset = clear.createChild('div', { className: 'reset', text: "Play Again"});
+wuibuttonbehavior(reset);
 
-	var options = { className: 'image', attr: { src: ''}}
+var grid = main.createChild('div', { className: 'grid' });
 
-    if (DEVELOPMENT_MODE) {
-    	//this.createChild('div', { className: 'hint', text: symbol });
-    	// this.hint = this.createChild('div', { className: 'hint' });
-    	this.hint = this.createChild('img', { className: 'hint'});
-    }
+game.createCards(grid);
+game.reset();
 
-	// this.cardFace = this.createChild('div', { className: 'cardFace', text: symbol });
-	// this.cardFace = this.createChild('div', { className: 'cardFace' });
-	this.cardFace = this.createChild('img', { className: 'cardFace'});
-
-    this.on('tap', function () {
-    	game.flipCard(this);
-    	// this.isFlipped = !this.isFlipped;
-    	// cardFace.toggleDisplay(this.isFlipped);
-	});
-
-	this.reset(symbol);
-}
-
-inherits(Card, WuiDom);
-
-Card.prototype.flip = function () {
-	this.isFlipped = !this.isFlipped;
-	this.cardFace.toggleDisplay(this.isFlipped);
-	this.cardFace.toggleClassName('flipped', this.isFlipped);
-};
-
-Card.prototype.reset = function(symbol){
-
-	if (DEVELOPMENT_MODE) {
-		this.hint.addClassNames(symbol);
-		this.hint.rootElement.src = symbol;
-    }
-
-	this.cardFace.rootElement.src = symbol;
-	this.symbol = symbol;
-
-	this.isFlipped = true;
-	this.flip();
-
-	this.enable();
-};
-
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex ;
-
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-
-  return array;
-}
-
-var arr = [];
-
-for (var i = 0; i < col * row; i ++) {
-	var num = Math.floor(i / 2);
-	arr.push(symbolList[num]);
-}
-
-arr = shuffle(arr);
-
-var cards = [];
-
-for (var i = 0; i < col * row; i ++) {
-	// var symbol = symbolList[num];
-	// var card = new Card(arr.pop());
-	var card = new Card(arr[i]);
-	cards.push(card);
-
-	grid.appendChild(card);
-}
-
-function resetCards(){
-
-	arr = shuffle(arr);
-
-	for (var i = 0; i < col * row; i ++) {
-		// var symbol = symbolList[num];
-		// var card = new Card(arr.pop());
-		var card = cards[i];
-		card.reset(arr[i]);
-	}
-}
+clear.hide();
 
 reset.on('tap', function () {
 	clear.hide();
-	resetCards();
 	game.reset();
 });
 
-},{"util":13,"wuibuttonbehavior":14,"wuidom":16}]},{},[17]);
+},{"./GameManager":18,"./constants":19,"wuibuttonbehavior":14,"wuidom":16}],21:[function(require,module,exports){
+function shuffle(array) {
+	var currentIndex = array.length, temporaryValue, randomIndex ;
+
+	// While there remain elements to shuffle...
+	while (0 !== currentIndex) {
+
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex -= 1;
+
+		// And swap it with the current element.
+		temporaryValue = array[currentIndex];
+		array[currentIndex] = array[randomIndex];
+		array[randomIndex] = temporaryValue;
+	}
+
+	return array;
+}
+
+module.exports = shuffle;
+},{}]},{},[20]);
