@@ -2836,7 +2836,7 @@ var WuiDom = require('wuidom');
 var inherits = require('util').inherits;
 var wuibuttonbehavior = require('wuibuttonbehavior');
 
-var DEVELOPMENT_MODE = true;
+var DEVELOPMENT_MODE = false;
 
 var htmlElement = document.querySelector('#main');
 var main = new WuiDom(htmlElement);
